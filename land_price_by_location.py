@@ -2,10 +2,9 @@
 
 import os, sys, pandas, numpy
 
-# Download data from 
+# Download data from Ministry of Land, Infrastructure, Transport, Tourism
 # http://www.land.mlit.go.jp/webland_english/servlet/DownloadServlet
 # e.g. http://www.land.mlit.go.jp/webland_english/zip/13_Tokyo_20142_e.zip
-# 13 = all of tokyo, 20142 = 2nd qtr 2014 (latest at the time), 
 
 pandas.options.display.float_format = '{:,.0f}'.format
 pandas.set_option('display.max_rows', 1000)
@@ -16,16 +15,16 @@ def read_frame(path):
 
 def add_price_per_sqm_series(frame):
 	name = "Price per sqm"
-	txpxcol = "Transaction-price(total)"
-	areacol = "Area(m^2)"
-	series = frame[txpxcol] / frame[areacol]
+	txprice_series_name = "Transaction-price(total)"
+	area_series_name = "Area(m^2)"
+	series = frame[txprice_series_name] / frame[area_series_name]
 	series.name = name
 	frame[name] = series
 	return series
 
-def add_price_at_wanted_size_series(frame, m2pxseries, sizewanted):
-	name = "Price for %d sqm" % sizewanted
-	series = m2pxseries * sizewanted
+def add_desired_area_price_series(frame, price_per_sqm_series, landsize_wanted):
+	name = "Price for %d sqm" % landsize_wanted
+	series = price_per_sqm_series * landsize_wanted
 	series.name = name
 	frame[name] = series
 	return series
@@ -38,7 +37,8 @@ def filter_residential_land_only(frame):
 def price_by_area(frame, price_per_sqm_series, price_at_wanted_size_series):
 	name = "City,Town,Ward,Village"
 #	name = "Area"
-	return landonly.groupby(name)[price_per_sqm_series.name, price_at_wanted_size_series.name] \
+	return frame.groupby(name) \
+		[price_per_sqm_series.name, price_at_wanted_size_series.name] \
 		.aggregate(numpy.median) \
 		.sort([price_per_sqm_series.name])
 
@@ -53,8 +53,10 @@ if __name__ == '__main__':
 		frame = read_frame(sys.argv[1])
 
 		price_per_sqm_series 		= add_price_per_sqm_series(frame)
-		price_at_wanted_size_series = add_price_at_wanted_size_series(frame, price_per_sqm_series, landsize_wanted)
+		price_at_wanted_size_series = add_desired_area_price_series \
+			(frame, price_per_sqm_series, landsize_wanted)
+		filtered_frame 				= filter_residential_land_only(frame)
 
-		landonly = filter_residential_land_only(frame)
-
-		print price_by_area(landonly, price_per_sqm_series, price_at_wanted_size_series).dropna()
+		print price_by_area \
+			(filtered_frame, price_per_sqm_series, price_at_wanted_size_series) \
+			.dropna()
