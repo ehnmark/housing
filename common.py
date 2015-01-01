@@ -40,6 +40,8 @@ def price_by_area(frame, price_per_sqm_series, desired_area_price_series):
 		.sort([price_per_sqm_series.name])
 
 def price_by_area_and_year(frame, price_per_sqm_series):
-	return frame.groupby(["City,Town,Ward,Village", "year"]) \
-		[price_per_sqm_series.name] \
-		.aggregate(numpy.median)
+	return pandas.pivot_table(frame, \
+			values=price_per_sqm_series.name, \
+			index=['City,Town,Ward,Village'], \
+			columns=['year'],
+			aggfunc=numpy.median)

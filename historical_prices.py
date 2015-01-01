@@ -31,5 +31,7 @@ if __name__ == '__main__':
 		filtered_frame 				= filter_residential_land_only(frame)
 
 		report = price_by_area_and_year(filtered_frame, price_per_sqm_series)
-		print report
-		report.to_csv("report.csv")
+		report.to_csv("pivot.csv")
+		plot = report.plot()
+		fig = plot.get_figure()
+		fig.savefig("output.png")
