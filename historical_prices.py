@@ -25,13 +25,11 @@ if __name__ == '__main__':
 		print
 	else:
 		frames = read_frames(sys.argv[1])
-		frame = pandas.concat(frames)
+		nonempty = filter(lambda f: len(f.index) > 1, frames)
+		frame = pandas.concat(nonempty)
 
 		price_per_sqm_series 		= add_price_per_sqm_series(frame)
 		filtered_frame 				= filter_residential_land_only(frame)
 
 		report = price_by_area_and_year(filtered_frame, price_per_sqm_series)
-		report.to_csv("pivot.csv")
-		plot = report.plot()
-		fig = plot.get_figure()
-		fig.savefig("output.png")
+		report.to_csv("report.csv")
